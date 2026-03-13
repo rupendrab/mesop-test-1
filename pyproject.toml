@@ -1,0 +1,10 @@
+[project]
+name = "mesop-1"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "asyncio>=4.0.0",
+    "mesop>=1.2.2",
+    "polars>=1.39.0",
+    "requests>=2.32.5",
+]
