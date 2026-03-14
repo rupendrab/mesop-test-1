@@ -25,7 +25,7 @@ class BufferLogHandler(logging.Handler):
 
 
 async def long_task():
-    for i in range(5):
+    for i in range(20):
         logging.info("Processing step %s", i + 1)
         await asyncio.sleep(2)
     logging.info("Done")
@@ -34,12 +34,12 @@ async def long_task():
 def show_logs(lines: list[str]):
     with me.box(
         style=me.Style(
-            border=me.Border.all(me.BorderSide(color="#d0d7de", width=1)),
+            border=me.Border.all(me.BorderSide(color="#4d98e4", width=1)),
             border_radius=8,
             padding=me.Padding.all(12),
             height=300,
             overflow_y="auto",
-            background="#fafafa",
+            background="#b6d4f3",
             margin=me.Margin(top=12),
         )
     ):
@@ -57,8 +57,8 @@ def show_logs(lines: list[str]):
 @me.page(path="/logs")
 def page():
     state = me.state(State)
-    if state.logs is None:
-        state.logs = []
+    if state.logs is None or len(state.logs) == 0:
+        state.logs = ["Waiting to start..."]
     if state.running is None:
         state.running = 0
 
@@ -67,6 +67,7 @@ def page():
 
 
 async def run_task(e: me.ClickEvent):
+    print("Starting long task...")
     state = me.state(State)
     state.running = 1
     state.logs = []
