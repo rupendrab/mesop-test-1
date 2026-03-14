@@ -1,0 +1,40 @@
+/* static/overrides.css */
+
+/*
+.mdc-text-field--outlined .mat-mdc-form-field-infix,
+.mdc-text-field--no-label .mat-mdc-form-field-infix {
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+  min-height: unset !important;
+}
+*/
+
+/* Compact Material form fields inside Mesop */
+
+.mat-mdc-form-field {
+  --mat-form-field-container-height: 36px;
+  --mat-form-field-container-vertical-padding: 6px;
+}
+
+/* Text field + select inner content */
+.mat-mdc-form-field-infix {
+  min-height: 36px !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+
+/* Select trigger specifically */
+.mat-mdc-select-trigger {
+  min-height: 24px !important;
+  align-items: center !important;
+}
+
+/* Optional: keep the arrow vertically centered */
+.mat-mdc-select-arrow-wrapper {
+  transform: none !important;
+}
+
+/* Optional: reduce subscript spacing if any hint/error area exists */
+.mat-mdc-form-field-subscript-wrapper {
+  display: none !important;
+}
