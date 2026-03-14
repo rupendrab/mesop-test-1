@@ -2,6 +2,8 @@ import time
 
 import mesop as me
 
+from app_shell import render_app_shell
+
 
 @me.stateclass
 class State:
@@ -12,10 +14,14 @@ class State:
 
 @me.page(path="/starter_kit")
 def page():
+    render_app_shell("starter", starter_content)
+
+
+def starter_content():
     with me.box(
         style=me.Style(
             background="#fff",
-            min_height="calc(100% - 48px)",
+            min_height="100vh",
             padding=me.Padding(bottom=16),
         )
     ):
@@ -32,7 +38,7 @@ def page():
             example_row()
             chat_input()
             output()
-    footer()
+        footer()
 
 
 def header_text():

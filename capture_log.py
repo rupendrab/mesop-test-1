@@ -4,6 +4,8 @@ from collections import deque
 
 import mesop as me
 
+from app_shell import render_app_shell
+
 
 @me.stateclass
 class State:
@@ -54,6 +56,48 @@ def show_logs(lines: list[str]):
                 ),
             )
 
+
+def logging_content(state: State):
+    with me.box(
+        style=me.Style(
+            padding=me.Padding.all(24),
+            background="#f8fafc",
+            min_height="100vh",
+            box_sizing="border-box",
+        )
+    ):
+        me.text(
+            "Logging",
+            type="headline-4",
+            style=me.Style(margin=me.Margin(bottom=12)),
+        )
+        me.button("Run", on_click=run_task, disabled=state.running)
+        show_logs(state.logs)
+
+
+def hello_content():
+    with me.box(
+        style=me.Style(
+            padding=me.Padding.all(24),
+            background="#f8fafc",
+            min_height="100vh",
+            box_sizing="border-box",
+        )
+    ):
+        me.text(
+            "Hello",
+            type="headline-4",
+            style=me.Style(margin=me.Margin(bottom=12)),
+        )
+        me.text(
+            "Hello world",
+            style=me.Style(
+                font_size=18,
+                color="#0f172a",
+            ),
+        )
+
+
 @me.page(path="/logs")
 def page():
     state = me.state(State)
@@ -61,9 +105,13 @@ def page():
         state.logs = ["Waiting to start..."]
     if state.running is None:
         state.running = 0
-
-    me.button("Run", on_click=run_task, disabled=state.running)
-    show_logs(state.logs)
+    active_view = me.query_params.get("view", "logs")
+    if active_view not in {"logs", "hello"}:
+        active_view = "logs"
+    render_app_shell(
+        active_view,
+        hello_content if active_view == "hello" else lambda: logging_content(state),
+    )
 
 
 async def run_task(e: me.ClickEvent):
