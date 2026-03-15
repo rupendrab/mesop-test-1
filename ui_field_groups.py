@@ -1,5 +1,6 @@
 from dataclasses import field
 import json
+import re
 import mesop as me
 
 ROW_GAP = 4
@@ -32,9 +33,11 @@ BUTTON_STYLE = me.Style(
 @me.stateclass
 class PageState:
     field_group_name: str = ""
+    replace: bool = False
     rows: list[dict[str, str]] = field(
         default_factory=lambda: [{"field_name": "", "action": "A"}]
     )
+    pasted_fields: str = ""
     submitted_json: str = ""
 
 
@@ -58,24 +61,66 @@ def page():
             box_sizing="border-box",
         )
     ):
-        with me.box(style=me.Style(width=FIELD_NAME_WIDTH)):
-            me.text("Field Group Name", style=LABEL_STYLE)
-            me.input(
-                value=s.field_group_name,
-                on_blur=on_field_group_name_blur,
-                appearance="outline",
-                style=me.Style(
-                    padding=me.Padding.all(0),
-                    box_sizing="border-box",
-                    width="100%",
-                    font_size=13,
-                    line_height="1.2",
-                ),
+        with me.box(
+            style=me.Style(
+                display="flex",
+                flex_direction="row",
+                align_items="end",
+                gap=16,
+            )
+        ):
+            with me.box(style=me.Style(width=FIELD_NAME_WIDTH)):
+                me.text("Field Group Name", style=LABEL_STYLE)
+                me.input(
+                    value=s.field_group_name,
+                    on_blur=on_field_group_name_blur,
+                    appearance="outline",
+                    style=me.Style(
+                        padding=me.Padding.all(0),
+                        box_sizing="border-box",
+                        width="100%",
+                        font_size=13,
+                        line_height="1.2",
+                    ),
+                )
+            me.checkbox(
+                "Replace",
+                checked=(1 if s.replace else 0),
+                on_change=on_replace_change,
+                style=me.Style(margin=me.Margin(bottom=4)),
             )
 
         me.box(style=me.Style(height="20px"))
 
         render_rows()
+
+        me.box(style=me.Style(height="20px"))
+
+        me.text("Fields as raw delimited text", style=LABEL_STYLE)
+        me.textarea(
+            value=s.pasted_fields,
+            on_blur=on_pasted_fields_blur,
+            appearance="outline",
+            rows=4,
+            placeholder="Paste a list of fields from your clipboard",
+            style=me.Style(
+                width="100%",
+                font_size=13,
+                line_height="1.2",
+            ),
+        )
+
+        me.box(style=me.Style(height="12px"))
+
+        me.button(
+            "Import Fields from delimited text",
+            on_click=on_paste_fields,
+            type="stroked",
+            style=me.Style(
+                border_radius=999,
+                padding=me.Padding.symmetric(horizontal=18, vertical=8),
+            ),
+        )
 
         me.box(style=me.Style(height="20px"))
 
@@ -126,6 +171,7 @@ def render_rows():
 
 
 def render_row(index: int, row: dict[str, str]):
+    s = get_state()
     with me.box(
         style=me.Style(
             display="flex",
@@ -157,6 +203,7 @@ def render_row(index: int, row: dict[str, str]):
                     me.SelectOption(label="D", value="D"),
                 ],
                 on_selection_change=on_action_change,
+                disabled=s.replace,
                 appearance="outline",
                 style=me.Style(
                     width="100%",
@@ -187,7 +234,23 @@ def render_row(index: int, row: dict[str, str]):
 def on_field_group_name_blur(e: me.InputBlurEvent):
     s = get_state()
     s.field_group_name = e.value
-    
+
+
+def on_pasted_fields_blur(e: me.InputBlurEvent):
+    s = get_state()
+    s.pasted_fields = e.value
+
+
+def on_replace_change(e: me.CheckboxChangeEvent):
+    s = get_state()
+    s.replace = e.checked
+    if e.checked:
+        s.rows = [
+            {"field_name": row["field_name"], "action": "A"}
+            for row in s.rows
+        ]
+
+
 def on_field_name_input(e: me.InputEvent):
     s = get_state()
     index = int(e.key.split("_")[-1])
@@ -210,6 +273,8 @@ def on_field_name_blur(e: me.InputBlurEvent):
     
 def on_action_change(e: me.SelectSelectionChangeEvent):
     s = get_state()
+    if s.replace:
+        return
     index = int(e.key.split("_")[-1])
 
     new_rows = list(s.rows)
@@ -233,6 +298,18 @@ def on_delete_row(e: me.ClickEvent):
         s.rows.pop(index)
 
 
+def on_paste_fields(e: me.ClickEvent):
+    s = get_state()
+    field_names = [
+        token for token in re.split(r"[^0-9A-Za-z\-_]+", s.pasted_fields) if token
+    ]
+
+    if field_names:
+        s.rows = [{"field_name": field_name, "action": "A"} for field_name in field_names]
+    else:
+        s.rows = [{"field_name": "", "action": "A"}]
+
+
 def on_submit(e: me.ClickEvent):
     s = get_state()
 
@@ -251,6 +328,7 @@ def on_submit(e: me.ClickEvent):
 
     payload = {
         "field_group_name": s.field_group_name.strip(),
+        "replace": s.replace,
         "adds": adds,
         "deletes": deletes,
     }
